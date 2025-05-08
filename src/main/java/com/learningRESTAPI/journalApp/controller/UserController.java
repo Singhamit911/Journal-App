@@ -45,12 +45,22 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> greetings(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        WeatherResponse weatherResponse = weatherService.getWeather("Delhi");
-        String greeting = "";
-        if(weatherResponse != null){
-            greeting = " , Weather feels like " + weatherResponse.getMain().getFeelsLike() + "°C";
+        String city = userService.findByUserName(authentication.getName()).getCity();
+        if(city != null) {
+            try {
+                WeatherResponse weatherResponse = weatherService.getWeather(city);
+                String greeting = "";
+                if (weatherResponse != null) {
+                    greeting = " , Weather feels like " + weatherResponse.getMain().getFeelsLike() + "°C";
+                }
+
+                return new ResponseEntity<>("Hi " + authentication.getName() + greeting, HttpStatus.OK);
+            } catch (Exception e){
+                return new ResponseEntity<>("Hi "+ authentication.getName(),HttpStatus.OK);
+            }
+        } else {
+            return new ResponseEntity<>("Hi "+ authentication.getName(),HttpStatus.OK);
         }
-        return new ResponseEntity<>("Hi "+authentication.getName() + greeting,HttpStatus.OK);
     }
 
     @PutMapping
@@ -62,6 +72,7 @@ public class UserController {
         if(old != null){
             old.setUserName(user.getUserName());
             old.setPassword(user.getPassword());
+            old.setCity(user.getCity());
             userService.saveNewUser(old);
             return new ResponseEntity<>(old,HttpStatus.OK);
         }
